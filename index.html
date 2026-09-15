@@ -1,0 +1,1309 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Rodízio de Caronas</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%F0%9F%9A%97%3C/text%3E%3C/svg%3E">
+<!-- PWA: só faz efeito quando este arquivo é aberto por um link hospedado (http/https) — abrindo
+     o .html direto no navegador (file://) essas linhas não atrapalham em nada, o app funciona igual. -->
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#C97A2B">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Rodízio">
+<link rel="apple-touch-icon" href="icon-192.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;600;700;800&family=Public+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#F3F1EC;
+    --surface:#FFFFFF;
+    --surface-alt:#EDEAE1;
+    --ink:#23262B;
+    --ink-soft:#5B5D63;
+    --muted:#8A8577;
+    --border:#DEDACC;
+    --accent:#C97A2B;
+    --accent-ink:#FFFFFF;
+    --good:#3F8F5F;
+    --good-bg:#E3F1E8;
+    --bad:#C1473B;
+    --bad-bg:#FBE7E4;
+    --neutral-bg:#ECE9E0;
+    --p1:#C97A2B; --p1-bg:#F6E5D2;
+    --p2:#3E7C82; --p2-bg:#DCEBEC;
+    --p3:#8C5E8A; --p3-bg:#ECE0EC;
+    --p4:#3B6FA0; --p4-bg:#DCE6F0;
+    --p5:#6E8C3B; --p5-bg:#E4EAD4;
+    --p6:#B15E6C; --p6-bg:#F3DEE1;
+    --p7:#5B5A8C; --p7-bg:#E2E1EE;
+    --p8:#A98A2E; --p8-bg:#F2E8CC;
+    --weekend-bg:#EAE7DD;
+    --holiday-bg:#F1E3D7;
+    --shadow:0 1px 2px rgba(35,38,43,.06), 0 10px 26px -14px rgba(35,38,43,.22);
+    color-scheme: light;
+  }
+  @media (prefers-color-scheme: dark){
+    :root:not([data-theme="light"]){
+      --bg:#17181B; --surface:#212327; --surface-alt:#2A2C31; --ink:#EDEBE5; --ink-soft:#B6B2A8;
+      --muted:#8C8880; --border:#3A3C41; --accent:#E0964A; --accent-ink:#1A1B1E;
+      --good:#5FBE85; --good-bg:rgba(95,190,133,.16); --bad:#E2685C; --bad-bg:rgba(226,104,92,.16);
+      --neutral-bg:#2A2C31;
+      --p1:#E0964A; --p1-bg:rgba(224,150,74,.18);
+      --p2:#5CAAB0; --p2-bg:rgba(92,170,176,.18);
+      --p3:#B487B1; --p3-bg:rgba(180,135,177,.18);
+      --p4:#5B9BD1; --p4-bg:rgba(91,155,209,.18);
+      --p5:#9CC15A; --p5-bg:rgba(156,193,90,.18);
+      --p6:#D98A98; --p6-bg:rgba(217,138,152,.18);
+      --p7:#9694C7; --p7-bg:rgba(150,148,199,.18);
+      --p8:#D4B54E; --p8-bg:rgba(212,181,78,.18);
+      --weekend-bg:#1D1E22; --holiday-bg:#2A2419;
+      --shadow:0 1px 2px rgba(0,0,0,.5), 0 10px 26px -14px rgba(0,0,0,.65);
+      color-scheme: dark;
+    }
+  }
+  :root[data-theme="dark"]{
+    --bg:#17181B; --surface:#212327; --surface-alt:#2A2C31; --ink:#EDEBE5; --ink-soft:#B6B2A8;
+    --muted:#8C8880; --border:#3A3C41; --accent:#E0964A; --accent-ink:#1A1B1E;
+    --good:#5FBE85; --good-bg:rgba(95,190,133,.16); --bad:#E2685C; --bad-bg:rgba(226,104,92,.16);
+    --neutral-bg:#2A2C31;
+    --p1:#E0964A; --p1-bg:rgba(224,150,74,.18);
+    --p2:#5CAAB0; --p2-bg:rgba(92,170,176,.18);
+    --p3:#B487B1; --p3-bg:rgba(180,135,177,.18);
+    --p4:#5B9BD1; --p4-bg:rgba(91,155,209,.18);
+    --p5:#9CC15A; --p5-bg:rgba(156,193,90,.18);
+    --p6:#D98A98; --p6-bg:rgba(217,138,152,.18);
+    --p7:#9694C7; --p7-bg:rgba(150,148,199,.18);
+    --p8:#D4B54E; --p8-bg:rgba(212,181,78,.18);
+    --weekend-bg:#1D1E22; --holiday-bg:#2A2419;
+    --shadow:0 1px 2px rgba(0,0,0,.5), 0 10px 26px -14px rgba(0,0,0,.65);
+    color-scheme: dark;
+  }
+
+  *{ box-sizing:border-box; }
+  html,body{ margin:0; height:auto; }
+  body{
+    background:var(--bg);
+    color:var(--ink);
+    font-family:'Public Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    font-size:15px;
+    line-height:1.5;
+    padding-inline:20px;
+    padding-block:calc(28px + env(safe-area-inset-top, 0px)) calc(60px + env(safe-area-inset-bottom, 0px));
+    max-width:1000px;
+    margin-inline:auto;
+  }
+  h1,h2,h3{ font-family:'Archivo','Public Sans',sans-serif; text-wrap:balance; margin:0; }
+  button{ font-family:inherit; }
+  :focus-visible{ outline:2px solid var(--accent); outline-offset:2px; }
+  @media (prefers-reduced-motion: reduce){
+    *{ animation-duration:.001ms !important; transition-duration:.001ms !important; }
+  }
+
+  /* ---------- header ---------- */
+  .app-header{ margin-bottom:24px; }
+  .eyebrow{
+    display:flex; align-items:center; gap:8px; flex-wrap:wrap;
+    font-size:12px; letter-spacing:.08em; text-transform:uppercase;
+    color:var(--muted); font-weight:600; margin-bottom:6px;
+  }
+  .sync-badge{
+    border:1px solid var(--border); padding:2px 9px; border-radius:999px; font-size:10.5px; letter-spacing:.04em;
+    display:inline-flex; align-items:center; gap:5px; text-transform:none;
+  }
+  .sync-badge::before{ content:""; width:6px; height:6px; border-radius:50%; background:var(--muted); }
+  .sync-badge.is-ok{ color:var(--good); background:var(--good-bg); border-color:transparent; }
+  .sync-badge.is-ok::before{ background:var(--good); }
+  .sync-badge.is-bad{ color:var(--bad); background:var(--bad-bg); border-color:transparent; }
+  .sync-badge.is-bad::before{ background:var(--bad); }
+  h1{ font-size:clamp(24px,4vw,32px); font-weight:800; }
+  .header-line{
+    margin-top:14px; height:3px; border-radius:2px;
+    background:repeating-linear-gradient(90deg, var(--accent) 0 22px, transparent 22px 34px);
+    opacity:.8;
+  }
+
+  /* ---------- setup screen ---------- */
+  .setup-screen{
+    max-width:640px; margin:60px auto; background:var(--surface); border:1px solid var(--border);
+    border-radius:16px; padding:28px 30px; box-shadow:var(--shadow);
+  }
+  .setup-screen h1{ font-size:22px; margin-bottom:10px; }
+  .setup-screen p{ color:var(--ink-soft); font-size:14px; }
+  .setup-screen code{
+    background:var(--surface-alt); padding:2px 6px; border-radius:5px; font-size:13px;
+  }
+  .setup-screen ol{ padding-left:20px; color:var(--ink); font-size:14px; }
+  .setup-screen li{ margin-bottom:6px; }
+
+  /* ---------- saldo cards ---------- */
+  .saldo-row{ display:grid; grid-template-columns:repeat(auto-fit,minmax(240px,1fr)); gap:14px; margin:26px 0 30px; }
+  @media (max-width:640px){ .saldo-row{ grid-template-columns:1fr; } }
+  .saldo-card{
+    background:var(--surface); border:1px solid var(--border); border-radius:14px;
+    padding:16px 18px; box-shadow:var(--shadow); border-left:4px solid var(--pc);
+    display:flex; flex-direction:column; gap:10px;
+  }
+  .saldo-head{ display:flex; align-items:flex-start; gap:8px; }
+  .saldo-dot{ width:10px; height:10px; border-radius:50%; background:var(--pc); flex:none; margin-top:4px; }
+  .saldo-head-text{ display:flex; flex-direction:column; gap:3px; flex:1; min-width:0; }
+  .saldo-head-text h3{ font-size:15px; font-weight:700; line-height:1.2; }
+  .car-tag{
+    align-self:flex-start; font-size:10px; font-weight:600; color:var(--ink-soft);
+    background:var(--neutral-bg); padding:1px 8px; border-radius:999px; white-space:nowrap;
+  }
+  .saldo-pill{
+    font-size:11px; font-weight:600; letter-spacing:.02em; padding:3px 9px; border-radius:999px;
+    background:var(--neutral-bg); color:var(--ink-soft); flex:none; align-self:flex-start; margin-top:1px;
+  }
+  .saldo-card.is-good .saldo-pill{ background:var(--good-bg); color:var(--good); }
+  .saldo-card.is-bad .saldo-pill{ background:var(--bad-bg); color:var(--bad); }
+  .saldo-frac{ display:flex; flex-direction:column; gap:3px; }
+  .frac-value{
+    font-family:'Archivo',sans-serif; font-weight:800; font-size:28px; line-height:1;
+    font-variant-numeric:tabular-nums; color:var(--ink);
+  }
+  .frac-sep{ color:var(--muted); font-weight:500; margin:0 2px; }
+  .frac-label{ font-size:11px; color:var(--ink-soft); text-wrap:balance; }
+  .frac-breakdown{
+    font-size:10.5px; color:var(--muted); margin-top:2px; text-wrap:balance;
+    font-variant-numeric:tabular-nums;
+  }
+  .saldo-number{
+    font-family:'Archivo',sans-serif; font-weight:700; font-size:16px; font-variant-numeric:tabular-nums; color:var(--ink-soft);
+  }
+  .saldo-card.is-good .saldo-number{ color:var(--good); }
+  .saldo-card.is-bad .saldo-number{ color:var(--bad); }
+  .saldo-number .unit{ font-size:11.5px; font-weight:600; color:var(--ink-soft); margin-left:3px; }
+  .saldo-bar{ position:relative; height:7px; border-radius:999px; background:var(--neutral-bg); overflow:hidden; }
+  .saldo-bar-fill{ height:100%; border-radius:999px; background:var(--pc); transition:width .3s ease; max-width:100%; }
+  .saldo-bar-target{
+    position:absolute; top:-3px; width:2px; height:13px; background:var(--ink-soft); opacity:.6;
+    transform:translateX(-1px);
+  }
+
+  /* ---------- calendar card ---------- */
+  .cal-card{ background:var(--surface); border:1px solid var(--border); border-radius:16px; padding:20px; box-shadow:var(--shadow); }
+  .cal-toolbar{ display:flex; align-items:center; gap:10px; flex-wrap:wrap; margin-bottom:6px; }
+  .cal-toolbar h2{ font-size:19px; font-weight:700; min-width:170px; }
+  .nav-btn{
+    width:32px; height:32px; border-radius:9px; border:1px solid var(--border); background:var(--surface-alt);
+    color:var(--ink); cursor:pointer; font-size:15px; display:grid; place-items:center;
+  }
+  .nav-btn:hover{ background:var(--neutral-bg); }
+  .today-btn{
+    border:1px solid var(--border); background:var(--surface-alt); color:var(--ink-soft);
+    border-radius:999px; padding:6px 14px; font-size:12.5px; font-weight:600; cursor:pointer; margin-left:auto;
+  }
+  .today-btn:hover{ color:var(--ink); background:var(--neutral-bg); }
+
+  .legend{ display:flex; gap:16px; flex-wrap:wrap; margin:14px 0 16px; }
+  .legend-item{ display:flex; align-items:center; gap:6px; font-size:12.5px; color:var(--ink-soft); font-weight:600; }
+  .legend-chip{ width:11px; height:11px; border-radius:4px; background:var(--pc); }
+
+  .weekday-row, .day-grid{ display:grid; grid-template-columns:repeat(7,1fr); gap:6px; }
+  .weekday-row{ margin-bottom:6px; }
+  .weekday-row span{
+    text-align:center; font-size:11px; font-weight:700; letter-spacing:.04em; text-transform:uppercase;
+    color:var(--muted); padding-bottom:4px;
+  }
+  .cell{
+    position:relative; min-height:64px; border-radius:10px; border:1px solid var(--border);
+    background:var(--surface); padding:6px 6px 8px; text-align:left; cursor:pointer; color:var(--ink);
+    display:flex; flex-direction:column; gap:4px; font-family:inherit;
+  }
+  .cell-empty{ visibility:hidden; border:none; }
+  .cell:disabled{ cursor:default; }
+  .cell-weekend{ background:var(--weekend-bg); color:var(--muted); }
+  .cell-holiday{ background:var(--holiday-bg); color:var(--ink-soft); }
+  .cell-business:not(:disabled):hover{ border-color:var(--accent); box-shadow:0 0 0 1px var(--accent) inset; }
+  .cell-today{ border-color:var(--accent); border-width:2px; }
+  .cell-unmarked-past{ box-shadow:inset 0 0 0 1px var(--bad); }
+  .cell-unmarked-past::after{
+    content:""; position:absolute; top:6px; right:6px; width:6px; height:6px; border-radius:50%; background:var(--bad);
+  }
+  .day-num{ font-size:12.5px; font-weight:700; font-variant-numeric:tabular-nums; }
+  .day-tag{ font-size:9.5px; color:var(--ink-soft); line-height:1.2; }
+  .driver-badge{
+    align-self:flex-start; max-width:100%; font-size:10.5px; font-weight:700; padding:2px 6px; border-radius:6px;
+    background:var(--pcbg); color:var(--pc); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
+  }
+  @media (max-width:520px){
+    .cell{ min-height:56px; padding:5px 4px 6px; }
+    .day-tag{ display:none; }
+    .driver-badge{ font-size:9.5px; padding:1px 4px; }
+  }
+
+  /* ---------- kpi ---------- */
+  .kpi-section{ margin-top:22px; }
+  .kpi-section summary{
+    cursor:pointer; font-weight:700; font-size:14px; color:var(--ink-soft); list-style:none;
+    display:flex; align-items:center; gap:8px; padding:6px 0;
+  }
+  .kpi-section summary::-webkit-details-marker{ display:none; }
+  .kpi-section summary::before{ content:"📊"; font-size:13px; }
+  .kpi-section summary:hover{ color:var(--ink); }
+  .kpi-body{
+    margin-top:14px; background:var(--surface); border:1px solid var(--border); border-radius:14px;
+    padding:18px 20px; display:flex; flex-direction:column; gap:18px;
+  }
+  .kpi-filters{ display:flex; align-items:center; gap:12px; flex-wrap:wrap; }
+  .seg-control{ display:inline-flex; border:1px solid var(--border); border-radius:9px; padding:2px; background:var(--surface-alt); }
+  .seg-control button{
+    border:none; background:none; color:var(--ink-soft); font-size:12.5px; font-weight:600;
+    padding:6px 12px; border-radius:7px; cursor:pointer;
+  }
+  .seg-control button.is-active{ background:var(--accent); color:var(--accent-ink); }
+  .kpi-nav{ display:flex; align-items:center; gap:8px; }
+  .kpi-nav span{ font-size:13.5px; font-weight:700; min-width:160px; text-align:center; }
+  .kpi-caption{ font-size:11.5px; color:var(--muted); margin:0; text-wrap:balance; }
+  .kpi-chart-block h4{ font-size:12px; text-transform:uppercase; letter-spacing:.06em; color:var(--muted); margin:0 0 12px; font-family:'Public Sans'; font-weight:700; }
+  .kpi-bars{ display:flex; flex-direction:column; gap:14px; }
+  .kpi-bar-item{ display:flex; flex-direction:column; gap:3px; }
+  .kpi-bar-row{ display:grid; grid-template-columns:88px 1fr 74px; align-items:center; gap:10px; }
+  .kpi-bar-label{ font-size:12.5px; font-weight:600; color:var(--ink); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .kpi-bar-track{ position:relative; height:14px; border-radius:999px; background:var(--pcbg); overflow:hidden; }
+  .kpi-bar-fill{ height:100%; border-radius:999px; background:var(--pc); transition:width .3s ease; max-width:100%; }
+  .kpi-bar-target{
+    position:absolute; top:-3px; width:2px; height:20px; background:var(--ink-soft); opacity:.7;
+    transform:translateX(-1px);
+  }
+  .kpi-bar-value{ font-family:'Archivo',sans-serif; font-weight:700; font-size:12.5px; font-variant-numeric:tabular-nums; text-align:right; color:var(--ink-soft); }
+  .kpi-bar-breakdown{
+    font-size:10.5px; color:var(--muted); margin-left:98px; text-wrap:balance; font-variant-numeric:tabular-nums;
+  }
+  .kpi-bar-breakdown .kpi-saldo-tag{ font-weight:700; }
+  .kpi-bar-breakdown .kpi-saldo-tag.is-good{ color:var(--good); }
+  .kpi-bar-breakdown .kpi-saldo-tag.is-bad{ color:var(--bad); }
+  @media (max-width:560px){
+    .kpi-bar-row{ grid-template-columns:64px 1fr 58px; gap:6px; }
+    .kpi-bar-label{ font-size:11.5px; }
+    .kpi-nav span{ min-width:120px; font-size:12.5px; }
+    .kpi-bar-breakdown{ margin-left:70px; }
+  }
+
+  /* ---------- settings ---------- */
+  .settings{ margin-top:22px; }
+  .settings summary{
+    cursor:pointer; font-weight:700; font-size:14px; color:var(--ink-soft); list-style:none;
+    display:flex; align-items:center; gap:8px; padding:6px 0;
+  }
+  .settings summary::-webkit-details-marker{ display:none; }
+  .settings summary::before{ content:"⚙"; font-size:13px; }
+  .settings summary:hover{ color:var(--ink); }
+  .settings-body{
+    margin-top:14px; background:var(--surface); border:1px solid var(--border); border-radius:14px;
+    padding:18px 20px; display:flex; flex-direction:column; gap:20px;
+  }
+  .settings-group h4{ font-size:12px; text-transform:uppercase; letter-spacing:.06em; color:var(--muted); margin:0 0 10px; font-family:'Public Sans'; font-weight:700; }
+  .people-fields{ display:flex; flex-direction:column; gap:8px; }
+  .person-row{ display:flex; align-items:center; gap:9px; flex-wrap:wrap; }
+  .person-row .legend-chip{ flex:none; }
+  .person-row input[type="text"]{
+    flex:1.3; min-width:110px; border:1px solid var(--border); border-radius:8px; padding:8px 10px;
+    background:var(--surface-alt); color:var(--ink); font-size:13.5px; font-family:inherit;
+  }
+  .person-row input.car-input{ flex:1; min-width:110px; }
+  .btn-remove-person{
+    flex:none; border:none; background:none; color:var(--bad); font-size:11.5px; font-weight:600;
+    cursor:pointer; padding:4px 6px;
+  }
+  .btn-remove-person:disabled{ opacity:.35; cursor:not-allowed; }
+  .btn-add-person{
+    align-self:flex-start; margin-top:2px; border:1px dashed var(--border); background:none;
+    color:var(--ink-soft); font-size:12.5px; font-weight:600; cursor:pointer; padding:7px 14px; border-radius:8px;
+  }
+  .btn-add-person:hover{ color:var(--ink); border-color:var(--muted); }
+  .field{ display:flex; flex-direction:column; gap:5px; }
+  .field label{ font-size:11.5px; color:var(--ink-soft); font-weight:600; }
+  .field input[type="text"], .field input[type="date"]{
+    border:1px solid var(--border); border-radius:8px; padding:8px 10px; background:var(--surface-alt);
+    color:var(--ink); font-size:13.5px; font-family:inherit;
+  }
+  .start-date-field{ max-width:220px; }
+  .settings-caption{ font-size:12.5px; color:var(--ink-soft); margin:0 0 8px; }
+  .holiday-row{ display:flex; align-items:center; gap:8px; font-size:13px; padding:5px 0; color:var(--ink); }
+  .holiday-row input{ accent-color:var(--accent); }
+  .holiday-row-custom{ justify-content:space-between; background:var(--surface-alt); padding:6px 10px; border-radius:8px; }
+  .btn-tiny{ border:none; background:none; color:var(--bad); font-size:11.5px; font-weight:600; cursor:pointer; padding:2px 4px; }
+  .add-holiday{ display:flex; gap:8px; flex-wrap:wrap; margin-top:10px; align-items:flex-end; }
+  .add-holiday .field{ flex:1; min-width:140px; }
+  .btn-primary{
+    background:var(--accent); color:var(--accent-ink); border:none; border-radius:8px;
+    padding:8px 16px; font-size:13px; font-weight:700; cursor:pointer;
+  }
+  .btn-primary:hover{ filter:brightness(1.05); }
+  .btn-ghost{
+    background:var(--surface-alt); color:var(--ink-soft); border:1px solid var(--border); border-radius:8px;
+    padding:8px 16px; font-size:13px; font-weight:600; cursor:pointer;
+  }
+  .btn-ghost:hover{ color:var(--ink); }
+  .settings-note{ font-size:11.5px; color:var(--muted); }
+
+  /* ---------- sync overlay ---------- */
+  .sync-overlay{
+    position:fixed; inset:0; background:rgba(23,24,27,.55); display:grid; place-items:center;
+    padding:20px; z-index:50;
+  }
+  .sync-overlay[hidden]{ display:none; }
+  .sync-overlay-card{
+    background:var(--surface); border:1px solid var(--border); border-radius:16px; padding:30px 32px;
+    box-shadow:var(--shadow); display:flex; flex-direction:column; align-items:center; gap:16px;
+    max-width:320px; text-align:center;
+  }
+  .sync-spinner{
+    width:34px; height:34px; border-radius:50%; border:3px solid var(--border); border-top-color:var(--accent);
+    animation:sync-spin .8s linear infinite;
+  }
+  @keyframes sync-spin{ to{ transform:rotate(360deg); } }
+  .sync-overlay-card p{ margin:0; font-size:14px; font-weight:600; color:var(--ink); }
+
+  /* ---------- modal ---------- */
+  .modal-backdrop{
+    position:fixed; inset:0; background:rgba(23,24,27,.5); display:grid; place-items:center; padding:20px; z-index:20;
+  }
+  .modal-card{
+    background:var(--surface); border-radius:16px; padding:22px; max-width:360px; width:100%;
+    box-shadow:var(--shadow); border:1px solid var(--border);
+  }
+  .modal-card h3{ font-size:16px; font-weight:700; margin-bottom:4px; }
+  .modal-sub{ font-size:13px; color:var(--ink-soft); margin:0 0 16px; }
+  .person-grid{ display:flex; flex-direction:column; gap:8px; margin-bottom:14px; }
+  .person-choice{
+    display:flex; align-items:center; gap:10px; text-align:left; border:1.5px solid var(--border);
+    background:var(--surface-alt); color:var(--ink); border-radius:10px; padding:10px 12px;
+    font-size:14px; font-weight:600; cursor:pointer;
+  }
+  .person-choice::before{ content:""; width:12px; height:12px; border-radius:4px; background:var(--pc); flex:none; }
+  .person-choice:hover{ border-color:var(--pc); }
+  .person-choice.is-active{ border-color:var(--pc); background:var(--pcbg); color:var(--pc); }
+  .modal-actions{ display:flex; justify-content:flex-end; gap:8px; }
+</style>
+</head>
+<body>
+
+<div id="setupScreen" class="setup-screen" hidden>
+  <h1>Falta configurar a planilha 🚗</h1>
+  <p>Este arquivo ainda não está ligado a nenhuma planilha do Google. Siga o guia de configuração que veio junto com este arquivo:</p>
+  <ol>
+    <li>Crie a planilha Google e cole o script (Apps Script) do guia.</li>
+    <li>Publique o script como "Web app" (execução: você / acesso: qualquer pessoa).</li>
+    <li>Copie a URL gerada e cole na constante <code>API_URL</code>, perto do topo do <code>&lt;script&gt;</code> deste arquivo.</li>
+    <li>Salve o arquivo e reabra — a partir daí ele já pode ser enviado para os colegas normalmente.</li>
+  </ol>
+</div>
+
+<div id="appRoot" hidden>
+  <div class="app-header">
+    <div class="eyebrow">
+      <span>Rodízio de caronas</span>
+      <span class="sync-badge" id="syncBadge">conectando…</span>
+    </div>
+    <h1>Quem vai hoje?</h1>
+    <div class="header-line" role="presentation"></div>
+  </div>
+
+  <div class="cal-card">
+    <div class="cal-toolbar">
+      <button type="button" class="nav-btn" id="prevMonth" aria-label="Mês anterior">‹</button>
+      <h2 id="monthLabel"></h2>
+      <button type="button" class="nav-btn" id="nextMonth" aria-label="Próximo mês">›</button>
+      <button type="button" class="today-btn" id="todayBtn">Hoje</button>
+    </div>
+    <div class="legend" id="legendRow"></div>
+    <div class="weekday-row">
+      <span>Dom</span><span>Seg</span><span>Ter</span><span>Qua</span><span>Qui</span><span>Sex</span><span>Sáb</span>
+    </div>
+    <div class="day-grid" id="dayGrid"></div>
+  </div>
+
+  <div class="saldo-row" id="saldoRow"></div>
+
+  <details class="kpi-section" id="kpiSection">
+    <summary>Indicadores — total x realizado por período</summary>
+    <div class="kpi-body">
+      <div class="kpi-filters">
+        <div class="seg-control" id="kpiPeriodType">
+          <button type="button" data-period="week">Semana</button>
+          <button type="button" data-period="month">Mês</button>
+          <button type="button" data-period="year">Ano</button>
+        </div>
+        <div class="kpi-nav">
+          <button type="button" class="nav-btn" id="kpiPrev" aria-label="Período anterior">‹</button>
+          <span id="kpiPeriodLabel"></span>
+          <button type="button" class="nav-btn" id="kpiNext" aria-label="Próximo período">›</button>
+          <button type="button" class="today-btn" id="kpiTodayBtn">Hoje</button>
+        </div>
+      </div>
+      <p class="kpi-caption">A barra colorida mostra quantas viagens cada um já fez no período; o traço mostra quantas deveria fazer (dias úteis ÷ motoristas).</p>
+      <div class="kpi-chart-block">
+        <h4>Viagens no período (número absoluto)</h4>
+        <div class="kpi-bars" id="kpiBarsAbs"></div>
+      </div>
+      <div class="kpi-chart-block">
+        <h4>Progresso da meta (%)</h4>
+        <div class="kpi-bars" id="kpiBarsPct"></div>
+      </div>
+    </div>
+  </details>
+
+  <details class="settings" id="settingsDetails">
+    <summary>Configurações</summary>
+    <div class="settings-body">
+      <div class="settings-group">
+        <h4>Colegas</h4>
+        <div class="people-fields" id="peopleFields"></div>
+        <button type="button" class="btn-add-person" id="addPersonBtn">+ adicionar colega</button>
+        <p class="settings-note">O campo "carro" é opcional. Deixe em branco se a pessoa tem carro próprio. Para quem divide o mesmo carro, digite o mesmo texto no campo de ambos (ex.: "Gol prata") — a meta daquele carro passa a somar a fatia de cada pessoa do grupo automaticamente.</p>
+      </div>
+      <div class="settings-group">
+        <h4>Início da contagem</h4>
+        <div class="field start-date-field">
+          <label for="startDateInput">A meta é calculada a partir desta data</label>
+          <input type="date" id="startDateInput">
+        </div>
+      </div>
+      <div class="settings-group">
+        <h4>Feriados</h4>
+        <div id="holidayList"></div>
+        <div class="add-holiday">
+          <div class="field">
+            <label for="customHolidayDate">Data</label>
+            <input type="date" id="customHolidayDate">
+          </div>
+          <div class="field">
+            <label for="customHolidayName">Nome do feriado</label>
+            <input type="text" id="customHolidayName" placeholder="Ex.: Recesso da fábrica">
+          </div>
+          <button type="button" class="btn-primary" id="addHolidayBtn">Adicionar</button>
+        </div>
+        <p class="settings-note">Os feriados nacionais são calculados automaticamente para qualquer ano (inclusive os móveis, como Carnaval e Corpus Christi). Desmarque os que a empresa não folga, ou adicione feriados próprios.</p>
+      </div>
+    </div>
+  </details>
+</div>
+
+<div id="modalRoot" hidden></div>
+
+<div id="syncOverlay" class="sync-overlay" hidden>
+  <div class="sync-overlay-card" role="alert" aria-live="assertive">
+    <div class="sync-spinner" aria-hidden="true"></div>
+    <p id="syncOverlayText">Conectando com a planilha, aguarde…</p>
+  </div>
+</div>
+
+<script>
+(function(){
+  "use strict";
+
+  // ============================================================================
+  // PASSO FINAL do setup: cole aqui a URL do seu Web App do Google Apps Script
+  // (veja o guia de configuração). Exemplo:
+  // var API_URL = "https://script.google.com/macros/s/AKfycbzrDMYiQaDG87DbPdIZjBkmhB4vmN8e54pSOohZCn5FXc6MpQ_dfiZNCM2Io5NRrB-N9w/exec";
+  // ============================================================================
+  var API_URL = "https://script.google.com/macros/s/AKfycbxB9GgXjJaH-sxeBAvsf1T9GmcuDq8O4BpSKPxJASd2rOdS7iFv9s2wqtkOQ-OVihDX2A/exec";
+  var POLL_MS = 20000;
+  var PALETTE_SIZE = 8; // quantidade de cores --p1..--p8 definidas no CSS; cores se repetem se houver mais colegas que isso
+
+  if(!API_URL){
+    document.getElementById('setupScreen').hidden = false;
+    return;
+  }
+  document.getElementById('appRoot').hidden = false;
+
+  function pad(n){ return String(n).padStart(2,'0'); }
+  function formatDateLocal(d){ return d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate()); }
+  function parseDateLocal(s){ var p=s.split('-').map(Number); return new Date(p[0], p[1]-1, p[2]); }
+  function todaySP(){
+    var fmt = new Intl.DateTimeFormat('en-CA', {timeZone:'America/Sao_Paulo', year:'numeric', month:'2-digit', day:'2-digit'});
+    return fmt.format(new Date());
+  }
+  function escapeHtml(s){
+    return String(s==null?'':s).replace(/[&<>"']/g, function(c){
+      return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];
+    });
+  }
+  function initials(name){
+    if(!name) return '';
+    var parts = name.trim().split(/\s+/);
+    if(parts.length===1) return parts[0].slice(0,2).toUpperCase();
+    return (parts[0][0]+parts[1][0]).toUpperCase();
+  }
+  function formatDatePretty(ds){
+    var d = parseDateLocal(ds);
+    return d.toLocaleDateString('pt-BR', {day:'2-digit', month:'short'});
+  }
+  function capFirst(s){ return s.charAt(0).toUpperCase()+s.slice(1); }
+  function formatGoal(n){
+    var r = Math.round(n*10)/10;
+    return (Math.round(r)===r) ? String(Math.round(r)) : String(r).replace('.', ',');
+  }
+
+  function easterSunday(year){
+    var a=year%19,b=Math.floor(year/100),c=year%100,d=Math.floor(b/4),e=b%4,
+        f=Math.floor((b+8)/25),g=Math.floor((b-f+1)/3),h=(19*a+b-d-g+15)%30,
+        i=Math.floor(c/4),k=c%4,l=(32+2*e+2*i-h-k)%7,m=Math.floor((a+11*h+22*l)/451),
+        month=Math.floor((h+l-7*m+114)/31), day=((h+l-7*m+114)%31)+1;
+    return new Date(year, month-1, day);
+  }
+  function addDays(d,n){ var r=new Date(d); r.setDate(r.getDate()+n); return r; }
+
+  function nationalHolidaysForYear(year){
+    var easter = easterSunday(year);
+    var list = [
+      {date:new Date(year,0,1), name:'Confraternização Universal'},
+      {date:addDays(easter,-48), name:'Carnaval (segunda-feira)'},
+      {date:addDays(easter,-47), name:'Carnaval (terça-feira)'},
+      {date:addDays(easter,-2), name:'Sexta-feira Santa'},
+      {date:addDays(easter,60), name:'Corpus Christi'},
+      {date:new Date(year,3,21), name:'Tiradentes'},
+      {date:new Date(year,4,1), name:'Dia do Trabalho'},
+      {date:new Date(year,8,7), name:'Independência do Brasil'},
+      {date:new Date(year,9,12), name:'Nossa Senhora Aparecida'},
+      {date:new Date(year,10,2), name:'Finados'},
+      {date:new Date(year,10,15), name:'Proclamação da República'},
+      {date:new Date(year,10,20), name:'Consciência Negra'},
+      {date:new Date(year,11,25), name:'Natal'}
+    ];
+    return list.map(function(h){ return {date: formatDateLocal(h.date), name: h.name}; });
+  }
+
+  function defaultConfig(){
+    return {
+      people:[{name:'Gringo',car:''},{name:'Rubian',car:''},{name:'Grilo',car:''}],
+      startDate: todaySP(), addedHolidays:[], removedHolidays:[]
+    };
+  }
+
+  var MONTH_NAMES = ['janeiro','fevereiro','março','abril','maio','junho','julho','agosto','setembro','outubro','novembro','dezembro'];
+
+  var state = {
+    config: defaultConfig(),
+    rides: {},
+    viewYear: parseInt(todaySP().slice(0,4),10),
+    viewMonth: parseInt(todaySP().slice(5,7),10)-1,
+    selectedDate: null
+  };
+
+  var kpiState = {
+    periodType: 'month', // week | month | year
+    anchor: todaySP() // qualquer data dentro do período em exibição
+  };
+
+  var syncStatus = 'connecting'; // connecting | ok | error
+  var lastSyncedAt = null;
+  var pendingRides = {}; // ds -> {person, ts} — marcações feitas por aqui que ainda podem não ter "chegado" numa leitura
+  var PENDING_TTL_MS = 45000; // por quanto tempo uma marcação recente resiste a uma leitura do servidor que ainda não reflete ela
+  var derivedCarGroups = []; // recalculado a cada render() — ver computeCarGroups()
+
+  function getHolidayMap(year){
+    var removed = new Set(state.config.removedHolidays||[]);
+    var defaults = nationalHolidaysForYear(year).filter(function(h){ return !removed.has(h.date); });
+    var added = (state.config.addedHolidays||[]).filter(function(h){ return h.date.slice(0,4)===String(year); });
+    var map = new Map();
+    defaults.concat(added).forEach(function(h){ map.set(h.date, h.name); });
+    return map;
+  }
+
+  function countBusinessDays(startStr, endStr){
+    if(!startStr || !endStr || endStr < startStr) return 0;
+    var d = parseDateLocal(startStr);
+    var end = parseDateLocal(endStr);
+    var count = 0, guard = 0;
+    var localCache = {};
+    while(d <= end && guard < 40000){
+      guard++;
+      var dow = d.getDay();
+      if(dow!==0 && dow!==6){
+        var ds = formatDateLocal(d);
+        var y = d.getFullYear();
+        if(!localCache[y]) localCache[y] = getHolidayMap(y);
+        if(!localCache[y].has(ds)) count++;
+      }
+      d = addDays(d,1);
+    }
+    return count;
+  }
+
+  function personIndex(name){
+    for(var i=0;i<state.config.people.length;i++){ if(state.config.people[i].name===name) return i; }
+    return -1;
+  }
+  function personColorSlot(idx){ return (idx % PALETTE_SIZE) + 1; }
+
+  // Um "carro" agrupa uma ou mais pessoas: quem não preenche o campo carro tem carro próprio
+  // (grupo só com ela mesma); quem digita o MESMO texto no campo carro divide o carro, e a meta
+  // desse carro vira a soma da meta individual de cada pessoa do grupo — é o grupo, não a pessoa,
+  // que vira a unidade de meta/saldo daqui pra frente (cards, indicadores, cores).
+  function carKeyOf(person){
+    return (person.car && person.car.trim()) ? ('c:'+person.car.trim().toLowerCase()) : ('p:'+person.name);
+  }
+  function computeCarGroups(){
+    var groups = [], byKey = {};
+    state.config.people.forEach(function(p){
+      var key = carKeyOf(p);
+      if(!byKey[key]){
+        var g = { key:key, people:[], carLabel: (p.car && p.car.trim()) ? p.car.trim() : '' };
+        byKey[key] = g;
+        groups.push(g);
+      }
+      byKey[key].people.push(p.name);
+    });
+    return groups;
+  }
+  function carGroupIndexOf(name){
+    for(var i=0;i<derivedCarGroups.length;i++){ if(derivedCarGroups[i].people.indexOf(name)!==-1) return i; }
+    return 0;
+  }
+
+  /* ---------------- rendering ---------------- */
+
+  var saldoRowEl = document.getElementById('saldoRow');
+  var legendRowEl = document.getElementById('legendRow');
+  var monthLabelEl = document.getElementById('monthLabel');
+  var dayGridEl = document.getElementById('dayGrid');
+  var modalRootEl = document.getElementById('modalRoot');
+  var syncBadgeEl = document.getElementById('syncBadge');
+  var peopleFieldsEl = document.getElementById('peopleFields');
+  var startDateInputEl = document.getElementById('startDateInput');
+  var holidayListEl = document.getElementById('holidayList');
+  var kpiPeriodTypeEl = document.getElementById('kpiPeriodType');
+  var kpiPeriodLabelEl = document.getElementById('kpiPeriodLabel');
+  var kpiBarsAbsEl = document.getElementById('kpiBarsAbs');
+  var kpiBarsPctEl = document.getElementById('kpiBarsPct');
+  var appRootEl = document.getElementById('appRoot');
+  var syncOverlayEl = document.getElementById('syncOverlay');
+  var syncOverlayTextEl = document.getElementById('syncOverlayText');
+
+  function render(){
+    derivedCarGroups = computeCarGroups();
+    renderSyncBadge();
+    renderSaldo();
+    renderLegend();
+    renderCalendar();
+    renderModal();
+    renderSettings();
+    renderKpi();
+  }
+
+  function renderSyncBadge(){
+    syncBadgeEl.className = 'sync-badge' + (syncStatus==='ok' ? ' is-ok' : syncStatus==='error' ? ' is-bad' : '');
+    syncBadgeEl.textContent = syncStatus==='ok' ? 'sincronizado' : syncStatus==='error' ? 'sem conexão com a planilha' : 'conectando…';
+    renderSyncOverlay();
+  }
+
+  function renderSyncOverlay(){
+    // Enquanto não sincronizar com a planilha (ou se a conexão cair depois), trava o app inteiro:
+    // ninguém marca carona nem mexe nas configurações sem saber se aquilo vai ser salvo de verdade.
+    var blocked = syncStatus !== 'ok';
+    syncOverlayEl.hidden = !blocked;
+    appRootEl.toggleAttribute('inert', blocked);
+    if(blocked){
+      syncOverlayTextEl.textContent = syncStatus==='error'
+        ? 'Sem conexão com a planilha. Tentando reconectar, aguarde…'
+        : 'Conectando com a planilha, aguarde…';
+    }
+  }
+
+  function renderLegend(){
+    // a cor agora é por CARRO (grupo), não por pessoa — quem divide carro divide cor também,
+    // então o legenda mostra um item por grupo (nome único, ou "Fulano + Ciclano" se for dividido).
+    legendRowEl.innerHTML = derivedCarGroups.map(function(g, gi){
+      var label = g.people.length>1 ? g.people.join(' + ') : g.people[0];
+      return '<span class="legend-item"><span class="legend-chip" style="--pc:var(--p'+personColorSlot(gi)+')"></span>'+escapeHtml(label)+'</span>';
+    }).join('');
+  }
+
+  function daysInMonth(y,m){ return new Date(y, m+1, 0).getDate(); }
+
+  function monthBounds(y,m){
+    return {
+      start: formatDateLocal(new Date(y,m,1)),
+      end: formatDateLocal(new Date(y,m+1,0))
+    };
+  }
+
+  function renderSaldo(){
+    var today = todaySP();
+    var bounds = monthBounds(state.viewYear, state.viewMonth);
+    var monthStart = bounds.start, monthEnd = bounds.end;
+    // "hoje" só serve pro RITMO dentro do mês (a marquinha que anda na barra). O saldo em si
+    // usa sempre o mês CHEIO — a meta do mês inteiro já entra na conta assim que o mês é
+    // exibido, pra bater exatamente com a fração "meta do mês / feito no mês" mostrada acima.
+    var paceEnd = (monthEnd < today) ? monthEnd : today;
+    var clippedMonthStart = (monthStart < state.config.startDate) ? state.config.startDate : monthStart;
+    var prevEnd = formatDateLocal(addDays(parseDateLocal(monthStart), -1));
+
+    var targetMonthTotal = (clippedMonthStart > monthEnd) ? 0 : countBusinessDays(clippedMonthStart, monthEnd);
+    var elapsedTarget = (clippedMonthStart > paceEnd) ? 0 : countBusinessDays(clippedMonthStart, paceEnd);
+    var expectedThroughMonthEnd = countBusinessDays(state.config.startDate, monthEnd);
+    var expectedThroughPrevEnd = (prevEnd < state.config.startDate) ? 0 : countBusinessDays(state.config.startDate, prevEnd);
+
+    var n = state.config.people.length || 1;
+    // meta/expectativa por PESSOA (a fatia individual de dias úteis ÷ motoristas) — a meta de cada
+    // carro é essa fatia somada pelo número de gente que usa aquele carro (ver derivedCarGroups).
+    var expectedEachThroughMonthEnd = expectedThroughMonthEnd / n;
+    var expectedEachThroughPrevEnd = expectedThroughPrevEnd / n;
+    var targetMonthEach = targetMonthTotal / n;
+    var elapsedTargetEach = elapsedTarget / n;
+
+    var actualThroughMonthEnd = {}, actualThisMonth = {}, actualThroughPrevEnd = {};
+    state.config.people.forEach(function(p){ actualThroughMonthEnd[p.name]=0; actualThisMonth[p.name]=0; actualThroughPrevEnd[p.name]=0; });
+    Object.keys(state.rides).forEach(function(ds){
+      var p = state.rides[ds];
+      if(actualThroughMonthEnd[p]===undefined) return;
+      if(ds <= monthEnd) actualThroughMonthEnd[p]++;
+      if(ds <= prevEnd) actualThroughPrevEnd[p]++;
+      if(ds >= monthStart && ds <= monthEnd) actualThisMonth[p]++;
+    });
+
+    saldoRowEl.innerHTML = derivedCarGroups.map(function(g, gi){
+      var size = g.people.length;
+      // tudo que seria "por pessoa" vira "somado pelo grupo" — quem divide carro divide a meta E
+      // o progresso: as viagens de qualquer um dos dois contam pro mesmo carro.
+      var totalActual = 0, monthActual = 0, actualPrevEnd = 0;
+      g.people.forEach(function(name){
+        totalActual += actualThroughMonthEnd[name]||0;
+        monthActual += actualThisMonth[name]||0;
+        actualPrevEnd += actualThroughPrevEnd[name]||0;
+      });
+      var expectedGroupThroughMonthEnd = expectedEachThroughMonthEnd * size;
+      var expectedGroupThroughPrevEnd = expectedEachThroughPrevEnd * size;
+      var targetMonthGroup = targetMonthEach * size;
+      var elapsedTargetGroup = elapsedTargetEach * size;
+
+      // saldo acumulado desde o início — a meta de cada carro é fracionária e o saldo (feito - meta)
+      // vai se somando de mês a mês automaticamente: aqui é sempre "tudo que o carro já fez" menos
+      // "tudo que a meta de cada mês (cheio) já exigia dele até este mês".
+      var saldo = totalActual - expectedGroupThroughMonthEnd;
+      var saldoRounded = Math.round(saldo*10)/10;
+      var stateClass='', stateLabel='Em dia';
+      if(saldoRounded > 0.05){ stateClass='is-good'; stateLabel='Adiantado'; }
+      else if(saldoRounded < -0.05){ stateClass='is-bad'; stateLabel='Devendo'; }
+
+      // saldo carregado do mês anterior (mesma fórmula, cortada no fim do mês anterior) — é o que
+      // "empurra" a meta deste mês para cima (se estava devendo) ou para baixo (se estava adiantado).
+      var previousSaldo = actualPrevEnd - expectedGroupThroughPrevEnd;
+      var previousSaldoRounded = Math.round(previousSaldo*10)/10;
+      var adjustedTarget = targetMonthGroup - previousSaldo;
+
+      // meta e barra: só do mês em exibição, já ajustada pelo saldo trazido do mês anterior.
+      var fillPct = adjustedTarget>0 ? Math.max(0, Math.min(100, (monthActual/adjustedTarget)*100)) : (monthActual>0?100:0);
+      var targetPct = adjustedTarget>0 ? Math.max(0, Math.min(100, (elapsedTargetGroup/adjustedTarget)*100)) : 0;
+
+      var breakdownHtml = '';
+      if(Math.abs(previousSaldoRounded) > 0.05){
+        var opLabel = previousSaldoRounded < 0 ? 'dívida do mês anterior' : 'crédito do mês anterior';
+        var opSign = previousSaldoRounded < 0 ? '+' : '−';
+        breakdownHtml = '<div class="frac-breakdown">meta do mês: '+formatGoal(targetMonthGroup)+' '+opSign+' '+opLabel+': '+formatGoal(Math.abs(previousSaldoRounded))+' = '+formatGoal(adjustedTarget)+' viagens</div>';
+      }
+
+      var displayName = g.people.length>1 ? g.people.join(' + ') : g.people[0];
+      var carTag = g.people.length>1
+        ? '<span class="car-tag">🚗 '+(g.carLabel ? escapeHtml(g.carLabel) : 'carro compartilhado')+'</span>'
+        : (g.carLabel ? '<span class="car-tag">🚗 '+escapeHtml(g.carLabel)+'</span>' : '');
+
+      return '<div class="saldo-card '+stateClass+'" style="--pc:var(--p'+personColorSlot(gi)+')">'+
+        '<div class="saldo-head"><span class="saldo-dot"></span><div class="saldo-head-text"><h3>'+escapeHtml(displayName)+'</h3>'+carTag+'</div><span class="saldo-pill">'+stateLabel+'</span></div>'+
+        '<div class="saldo-frac"><span class="frac-value">'+formatGoal(adjustedTarget)+'<span class="frac-sep">/</span>'+monthActual+'</span><span class="frac-label">meta do mês do carro (dias úteis ÷ motoristas, somada por carro) / viagens feitas</span>'+breakdownHtml+'</div>'+
+        '<div class="saldo-bar"><div class="saldo-bar-fill" style="width:'+fillPct+'%"></div><div class="saldo-bar-target" style="left:'+targetPct+'%"></div></div>'+
+        '<div class="saldo-number">'+(saldoRounded>0?'+':'')+String(saldoRounded).replace('.', ',')+'<span class="unit">'+(Math.abs(saldoRounded)===1?'viagem':'viagens')+' no saldo acumulado</span></div>'+
+        '</div>';
+    }).join('');
+  }
+
+  function renderCalendar(){
+    var y = state.viewYear, m = state.viewMonth;
+    monthLabelEl.textContent = capFirst(MONTH_NAMES[m]+' de '+y);
+
+    var holidayMap = getHolidayMap(y);
+    var first = new Date(y,m,1);
+    var startDow = first.getDay();
+    var total = daysInMonth(y,m);
+    var todayStr = todaySP();
+
+    var html = '';
+    for(var i=0;i<startDow;i++){ html += '<div class="cell cell-empty" aria-hidden="true"></div>'; }
+    for(var day=1; day<=total; day++){
+      var ds = y+'-'+pad(m+1)+'-'+pad(day);
+      var dow = new Date(y,m,day).getDay();
+      var isWeekend = dow===0 || dow===6;
+      var holidayName = holidayMap.get(ds);
+      var isHoliday = !!holidayName;
+      var isPast = ds < todayStr;
+      var isToday = ds === todayStr;
+      var driver = state.rides[ds];
+      var businessDay = !isWeekend && !isHoliday;
+      var classes = ['cell'];
+      if(isWeekend) classes.push('cell-weekend');
+      if(isHoliday) classes.push('cell-holiday');
+      if(isToday) classes.push('cell-today');
+      if(businessDay) classes.push('cell-business');
+      if(businessDay && !driver && isPast && ds >= state.config.startDate) classes.push('cell-unmarked-past');
+      var idx = driver ? personIndex(driver) : -1;
+      var slot = idx>=0 ? personColorSlot(carGroupIndexOf(driver)) : 0; // cor do CARRO da pessoa, não da pessoa em si
+      var badge = (driver && idx>=0) ? '<span class="driver-badge" style="--pc:var(--p'+slot+');--pcbg:var(--p'+slot+'-bg)">'+escapeHtml(driver)+'</span>' : '';
+      var tag = isHoliday ? '<span class="day-tag">'+escapeHtml(holidayName)+'</span>' : (isWeekend ? '<span class="day-tag">fim de semana</span>' : '');
+      html += '<button type="button" class="'+classes.join(' ')+'" data-date="'+ds+'" '+(businessDay?'':'disabled')+
+        ' aria-label="'+ds+(holidayName?', feriado: '+escapeHtml(holidayName):'')+'">'+
+        '<span class="day-num">'+day+'</span>'+badge+tag+'</button>';
+    }
+    dayGridEl.innerHTML = html;
+  }
+
+  function renderModal(){
+    if(!state.selectedDate){ modalRootEl.hidden = true; modalRootEl.innerHTML=''; return; }
+    modalRootEl.hidden = false;
+    var ds = state.selectedDate;
+    var current = state.rides[ds];
+    var label = capFirst(parseDateLocal(ds).toLocaleDateString('pt-BR', {weekday:'long', day:'2-digit', month:'long', year:'numeric'}));
+    var buttons = state.config.people.map(function(p){
+      var name = p.name;
+      var slot = personColorSlot(carGroupIndexOf(name));
+      return '<button type="button" class="person-choice'+(current===name?' is-active':'')+'" style="--pc:var(--p'+slot+');--pcbg:var(--p'+slot+'-bg)" data-person="'+escapeHtml(name)+'">'+escapeHtml(name)+'</button>';
+    }).join('');
+    modalRootEl.innerHTML =
+      '<div class="modal-backdrop" data-close="1">'+
+        '<div class="modal-card" role="dialog" aria-modal="true" aria-label="Marcar carona">'+
+          '<h3>'+label+'</h3>'+
+          '<p class="modal-sub">Quem levou o carro nesse dia?</p>'+
+          '<div class="person-grid">'+buttons+'</div>'+
+          '<div class="modal-actions">'+
+            (current ? '<button type="button" class="btn-ghost" data-clear="1">Limpar</button>' : '')+
+            '<button type="button" class="btn-ghost" data-close="1">Cancelar</button>'+
+          '</div>'+
+        '</div>'+
+      '</div>';
+  }
+
+  function renderSettings(){
+    peopleFieldsEl.innerHTML = state.config.people.map(function(p, idx){
+      var canRemove = state.config.people.length > 1;
+      var slot = personColorSlot(carGroupIndexOf(p.name));
+      return '<div class="person-row">'+
+        '<span class="legend-chip" style="--pc:var(--p'+slot+')"></span>'+
+        '<input type="text" data-person-idx="'+idx+'" data-field="name" value="'+escapeHtml(p.name)+'" aria-label="Nome do colega '+(idx+1)+'">'+
+        '<input type="text" class="car-input" data-person-idx="'+idx+'" data-field="car" value="'+escapeHtml(p.car||'')+'" placeholder="carro (opcional)" aria-label="Carro de '+escapeHtml(p.name)+'">'+
+        '<button type="button" class="btn-remove-person" data-remove-person="'+idx+'"'+(canRemove?'':' disabled')+'>remover</button>'+
+        '</div>';
+    }).join('');
+    if(document.activeElement !== startDateInputEl){
+      startDateInputEl.value = state.config.startDate;
+    }
+
+    var year = state.viewYear;
+    var defaults = nationalHolidaysForYear(year);
+    var removedSet = new Set(state.config.removedHolidays||[]);
+    var addedForYear = (state.config.addedHolidays||[]).filter(function(h){ return h.date.slice(0,4)===String(year); });
+    var rows = defaults.map(function(h){
+      var checked = !removedSet.has(h.date);
+      return '<label class="holiday-row"><input type="checkbox" data-holiday-toggle="'+h.date+'" '+(checked?'checked':'')+'> <span>'+formatDatePretty(h.date)+' — '+escapeHtml(h.name)+'</span></label>';
+    }).join('');
+    var addedRows = addedForYear.map(function(h){
+      return '<div class="holiday-row holiday-row-custom"><span>'+formatDatePretty(h.date)+' — '+escapeHtml(h.name)+'</span><button type="button" class="btn-tiny" data-remove-custom="'+h.date+'">remover</button></div>';
+    }).join('');
+    holidayListEl.innerHTML =
+      '<p class="settings-caption">Feriados nacionais em '+year+' (desmarque os que não valem na empresa):</p>'+rows+
+      (addedForYear.length ? '<p class="settings-caption" style="margin-top:10px;">Feriados adicionados:</p>'+addedRows : '');
+  }
+
+  /* ---------------- indicadores (KPI) ---------------- */
+
+  function startOfWeek(ds){
+    var d = parseDateLocal(ds);
+    return formatDateLocal(addDays(d, -d.getDay())); // semana começa no domingo, igual ao calendário
+  }
+
+  function kpiPeriodBounds(){
+    var anchor = kpiState.anchor;
+    if(kpiState.periodType === 'week'){
+      var start = startOfWeek(anchor);
+      return { start: start, end: formatDateLocal(addDays(parseDateLocal(start), 6)) };
+    }
+    if(kpiState.periodType === 'year'){
+      var y = anchor.slice(0,4);
+      return { start: y+'-01-01', end: y+'-12-31' };
+    }
+    var d = parseDateLocal(anchor);
+    return monthBounds(d.getFullYear(), d.getMonth());
+  }
+
+  function kpiShiftPeriod(dir){
+    var d = parseDateLocal(kpiState.anchor);
+    if(kpiState.periodType === 'week'){ d = addDays(d, 7*dir); }
+    else if(kpiState.periodType === 'year'){ d = new Date(d.getFullYear()+dir, d.getMonth(), 1); }
+    else { d = new Date(d.getFullYear(), d.getMonth()+dir, 1); }
+    kpiState.anchor = formatDateLocal(d);
+  }
+
+  function kpiPeriodLabel(bounds){
+    if(kpiState.periodType === 'week'){
+      return formatDatePretty(bounds.start)+' – '+formatDatePretty(bounds.end);
+    }
+    if(kpiState.periodType === 'year'){
+      return bounds.start.slice(0,4);
+    }
+    var d = parseDateLocal(bounds.start);
+    return capFirst(MONTH_NAMES[d.getMonth()]+' de '+d.getFullYear());
+  }
+
+  function computeKpiData(bounds){
+    var clippedStart = (bounds.start < state.config.startDate) ? state.config.startDate : bounds.start;
+    var totalBiz = (clippedStart > bounds.end) ? 0 : countBusinessDays(clippedStart, bounds.end);
+    var n = state.config.people.length || 1;
+    var periodMetaEach = totalBiz / n;
+
+    // saldo acumulado desde o início até o dia ANTERIOR ao período em exibição — mesma fórmula
+    // usada nos cards do calendário, só que generalizada pra semana/mês/ano: isso "carrega" pra
+    // este período quem já estava devendo ou adiantado, em vez de zerar a conta a cada período.
+    var prevEnd = formatDateLocal(addDays(parseDateLocal(bounds.start), -1));
+    var expectedThroughPrevEnd = (prevEnd < state.config.startDate) ? 0 : countBusinessDays(state.config.startDate, prevEnd);
+    var expectedEachThroughPrevEnd = expectedThroughPrevEnd / n;
+
+    var actual = {}, actualThroughPrevEnd = {};
+    state.config.people.forEach(function(p){ actual[p.name] = 0; actualThroughPrevEnd[p.name] = 0; });
+    Object.keys(state.rides).forEach(function(ds){
+      var p = state.rides[ds];
+      if(actual[p]===undefined) return;
+      if(ds >= bounds.start && ds <= bounds.end) actual[p]++;
+      if(ds <= prevEnd) actualThroughPrevEnd[p]++;
+    });
+
+    // agrupado por CARRO: quem divide carro divide a meta (soma da fatia de cada um) e o progresso
+    // (as viagens de qualquer um dos dois contam pro mesmo carro) — mesma lógica dos cards do calendário.
+    return derivedCarGroups.map(function(g, gi){
+      var size = g.people.length;
+      var done = 0, actualPrevEnd = 0;
+      g.people.forEach(function(name){
+        done += actual[name]||0;
+        actualPrevEnd += actualThroughPrevEnd[name]||0;
+      });
+      var groupMeta = periodMetaEach * size;
+      var expectedGroupThroughPrevEnd = expectedEachThroughPrevEnd * size;
+      var previousSaldo = actualPrevEnd - expectedGroupThroughPrevEnd;
+      var previousSaldoRounded = Math.round(previousSaldo*10)/10;
+      var adjustedMeta = groupMeta - previousSaldo;
+      var pct = adjustedMeta>0 ? (done/adjustedMeta*100) : (done>0 ? 100 : 0);
+      var label = g.people.length>1 ? g.people.join(' + ') : g.people[0];
+      return { name:label, idx:gi, meta:groupMeta, adjustedMeta:adjustedMeta, previousSaldo:previousSaldoRounded, done:done, pct:pct };
+    });
+  }
+
+  function kpiBreakdownHtml(it){
+    if(Math.abs(it.previousSaldo) <= 0.05) return '';
+    var isBad = it.previousSaldo < 0;
+    var opLabel = isBad ? 'dívida do período anterior' : 'crédito do período anterior';
+    var opSign = isBad ? '+' : '−';
+    var tag = '<span class="kpi-saldo-tag '+(isBad?'is-bad':'is-good')+'">'+(isBad?'Devendo':'Adiantado')+'</span>';
+    return tag+' — meta do período: '+formatGoal(it.meta)+' '+opSign+' '+opLabel+': '+formatGoal(Math.abs(it.previousSaldo))+' = '+formatGoal(it.adjustedMeta)+' viagens';
+  }
+
+  function renderKpiBars(containerEl, items, opts){
+    var maxVal = opts.minScale || 0;
+    items.forEach(function(it){
+      maxVal = Math.max(maxVal, opts.getValue(it), opts.getTarget(it));
+    });
+    maxVal = maxVal>0 ? maxVal*1.15 : 1;
+    containerEl.innerHTML = items.map(function(it){
+      var slot = personColorSlot(it.idx);
+      var valuePct = Math.max(0, Math.min(100, (opts.getValue(it)/maxVal)*100));
+      var targetPct = Math.max(0, Math.min(100, (opts.getTarget(it)/maxVal)*100));
+      var breakdown = opts.getBreakdown ? opts.getBreakdown(it) : '';
+      return '<div class="kpi-bar-item">'+
+        '<div class="kpi-bar-row">'+
+          '<div class="kpi-bar-label">'+escapeHtml(it.name)+'</div>'+
+          '<div class="kpi-bar-track" style="--pc:var(--p'+slot+');--pcbg:var(--p'+slot+'-bg)">'+
+            '<div class="kpi-bar-fill" style="width:'+valuePct+'%"></div>'+
+            '<div class="kpi-bar-target" style="left:'+targetPct+'%"></div>'+
+          '</div>'+
+          '<div class="kpi-bar-value">'+opts.formatValue(it)+'</div>'+
+        '</div>'+
+        (breakdown ? '<div class="kpi-bar-breakdown">'+breakdown+'</div>' : '')+
+      '</div>';
+    }).join('');
+  }
+
+  function renderKpi(){
+    kpiPeriodTypeEl.querySelectorAll('[data-period]').forEach(function(btn){
+      btn.classList.toggle('is-active', btn.getAttribute('data-period')===kpiState.periodType);
+    });
+    var bounds = kpiPeriodBounds();
+    kpiPeriodLabelEl.textContent = kpiPeriodLabel(bounds);
+    var data = computeKpiData(bounds);
+
+    renderKpiBars(kpiBarsAbsEl, data, {
+      getValue: function(it){ return it.done; },
+      getTarget: function(it){ return it.adjustedMeta; },
+      formatValue: function(it){ return it.done+' / '+formatGoal(it.adjustedMeta); },
+      getBreakdown: kpiBreakdownHtml
+    });
+    renderKpiBars(kpiBarsPctEl, data, {
+      getValue: function(it){ return it.pct; },
+      getTarget: function(it){ return 100; },
+      minScale: 100,
+      formatValue: function(it){ return formatGoal(Math.round(it.pct*10)/10)+'%'; }
+    });
+  }
+
+  /* ---------------- sync with Google Sheets (Apps Script) ---------------- */
+
+  function normalizeConfig(raw){
+    var d = defaultConfig();
+    if(!raw) return d;
+    // aceita tanto o formato novo ([{name,car}]) quanto o antigo (["Nome", ...], de planilhas
+    // configuradas antes do recurso de carro compartilhado) — migra na hora, sem perder nada.
+    var rawPeople = Array.isArray(raw.people) ? raw.people : null;
+    var people = null;
+    if(rawPeople && rawPeople.length){
+      people = rawPeople.map(function(p){
+        if(typeof p === 'string') return { name:p.trim(), car:'' };
+        if(p && typeof p==='object' && typeof p.name==='string') return { name:p.name.trim(), car:(typeof p.car==='string'?p.car.trim():'') };
+        return null;
+      }).filter(function(p){ return p && p.name; });
+    }
+    return {
+      people: (people && people.length) ? people : d.people,
+      startDate: raw.startDate || d.startDate,
+      removedHolidays: raw.removedHolidays || [],
+      addedHolidays: raw.addedHolidays || []
+    };
+  }
+
+  function noCacheUrl(){
+    // "cache busting": alguns proxies/CDNs na frente do Apps Script guardam a resposta do GET por
+    // um tempinho e servem essa cópia velha de novo, mesmo com {cache:'no-store'} no fetch (isso só
+    // controla o cache do PRÓPRIO navegador, não o de servidores no meio do caminho). Um parâmetro
+    // que muda a cada chamada garante que a URL nunca repete, então nada tem uma resposta antiga
+    // guardada pra devolver.
+    return API_URL + (API_URL.indexOf('?')>=0 ? '&' : '?') + '_ts=' + Date.now();
+  }
+
+  function reconcilePendingRides(rides){
+    // Depois de marcar uma viagem, guardamos ela em `pendingRides`. Se uma leitura do servidor
+    // chegar logo em seguida SEM essa marcação (leitura atrasada, cache no meio do caminho, etc.),
+    // não deixamos ela sumir do calendário: mantemos o valor local até o servidor realmente
+    // confirmar a mesma marcação (aí paramos de "segurar") ou até expirar o prazo de tolerância.
+    var now = Date.now();
+    Object.keys(pendingRides).forEach(function(ds){
+      var pending = pendingRides[ds];
+      if(now - pending.ts > PENDING_TTL_MS){ delete pendingRides[ds]; return; }
+      var serverVal = rides[ds] || '';
+      if(serverVal === pending.person){ delete pendingRides[ds]; return; }
+      if(pending.person){ rides[ds] = pending.person; } else { delete rides[ds]; }
+    });
+    return rides;
+  }
+
+  function loadFromServer(){
+    return fetch(noCacheUrl(), {cache:'no-store'})
+      .then(function(res){ if(!res.ok) throw new Error('http '+res.status); return res.json(); })
+      .then(function(data){
+        if(!data || data.ok===false) throw new Error(data && data.error || 'resposta inválida');
+        state.config = normalizeConfig(data.config);
+        state.rides = reconcilePendingRides(data.rides || {});
+        syncStatus = 'ok';
+        lastSyncedAt = Date.now();
+        render();
+      })
+      .catch(function(){
+        syncStatus = 'error';
+        renderSyncBadge();
+      });
+  }
+
+  function postToServer(payload){
+    return fetch(API_URL, {
+      method:'POST',
+      headers:{'Content-Type':'text/plain;charset=utf-8'},
+      body: JSON.stringify(payload)
+    }).then(function(res){
+      if(!res.ok) throw new Error('http '+res.status);
+      return res.json();
+    });
+  }
+
+  function markDay(ds, person){
+    state.rides = Object.assign({}, state.rides);
+    if(person){ state.rides[ds] = person; } else { delete state.rides[ds]; }
+    pendingRides[ds] = { person: person || '', ts: Date.now() };
+    render();
+    postToServer({type:'ride', date: ds, driver: person || ''})
+      .then(function(){ syncStatus='ok'; renderSyncBadge(); })
+      .catch(function(){ syncStatus='error'; renderSyncBadge(); });
+  }
+
+  function saveConfig(){
+    render();
+    postToServer({type:'config', config: state.config})
+      .then(function(){ syncStatus='ok'; renderSyncBadge(); })
+      .catch(function(){ syncStatus='error'; renderSyncBadge(); });
+  }
+
+  /* ---------------- events ---------------- */
+
+  document.getElementById('prevMonth').addEventListener('click', function(){
+    state.viewMonth--; if(state.viewMonth<0){ state.viewMonth=11; state.viewYear--; }
+    render();
+  });
+  document.getElementById('nextMonth').addEventListener('click', function(){
+    state.viewMonth++; if(state.viewMonth>11){ state.viewMonth=0; state.viewYear++; }
+    render();
+  });
+  document.getElementById('todayBtn').addEventListener('click', function(){
+    var t = todaySP();
+    state.viewYear = parseInt(t.slice(0,4),10);
+    state.viewMonth = parseInt(t.slice(5,7),10)-1;
+    render();
+  });
+
+  kpiPeriodTypeEl.addEventListener('click', function(e){
+    var btn = e.target.closest('[data-period]');
+    if(!btn) return;
+    kpiState.periodType = btn.getAttribute('data-period');
+    renderKpi();
+  });
+  document.getElementById('kpiPrev').addEventListener('click', function(){ kpiShiftPeriod(-1); renderKpi(); });
+  document.getElementById('kpiNext').addEventListener('click', function(){ kpiShiftPeriod(1); renderKpi(); });
+  document.getElementById('kpiTodayBtn').addEventListener('click', function(){ kpiState.anchor = todaySP(); renderKpi(); });
+
+  dayGridEl.addEventListener('click', function(e){
+    var cell = e.target.closest('.cell-business');
+    if(!cell || cell.disabled) return;
+    state.selectedDate = cell.getAttribute('data-date');
+    render();
+  });
+
+  modalRootEl.addEventListener('click', function(e){
+    var personBtn = e.target.closest('[data-person]');
+    if(personBtn){ markDay(state.selectedDate, personBtn.getAttribute('data-person')); state.selectedDate=null; render(); return; }
+    if(e.target.closest('[data-clear]')){ markDay(state.selectedDate, ''); state.selectedDate=null; render(); return; }
+    if(e.target.matches('.modal-backdrop') || e.target.closest('.btn-ghost[data-close]')){
+      state.selectedDate = null; render();
+    }
+  });
+  document.addEventListener('keydown', function(e){
+    if(e.key==='Escape' && state.selectedDate){ state.selectedDate=null; render(); }
+  });
+
+  peopleFieldsEl.addEventListener('change', function(e){
+    var input = e.target.closest('[data-person-idx]');
+    if(!input) return;
+    var idx = parseInt(input.getAttribute('data-person-idx'),10);
+    var field = input.getAttribute('data-field');
+    var people = state.config.people.map(function(p){ return { name:p.name, car:p.car||'' }; });
+
+    if(field === 'car'){
+      people[idx].car = input.value.trim();
+      state.config = Object.assign({}, state.config, { people: people });
+      saveConfig();
+      return;
+    }
+
+    // field === 'name'
+    var val = input.value.trim();
+    var oldName = people[idx].name;
+    if(!val){ input.value = oldName; return; }
+    if(val === oldName) return;
+    if(people.some(function(p,i){ return i!==idx && p.name===val; })){
+      alert('Já existe um colega com esse nome.');
+      input.value = oldName;
+      return;
+    }
+    people[idx].name = val;
+    state.config = Object.assign({}, state.config, { people: people });
+    // migra na hora o histórico local: viagens já marcadas com o nome antigo passam a contar pro novo nome.
+    var renamedRides = {};
+    Object.keys(state.rides).forEach(function(ds){
+      renamedRides[ds] = (state.rides[ds] === oldName) ? val : state.rides[ds];
+    });
+    state.rides = renamedRides;
+    saveConfig();
+    postToServer({type:'renamePerson', from: oldName, to: val})
+      .then(function(){ syncStatus='ok'; renderSyncBadge(); })
+      .catch(function(){ syncStatus='error'; renderSyncBadge(); });
+  });
+
+  peopleFieldsEl.addEventListener('click', function(e){
+    var btn = e.target.closest('[data-remove-person]');
+    if(!btn || btn.disabled) return;
+    var idx = parseInt(btn.getAttribute('data-remove-person'),10);
+    if(state.config.people.length <= 1) return;
+    var name = state.config.people[idx].name;
+    if(!confirm('Remover '+name+' do rodízio?\n\nAs viagens já registradas continuam guardadas — se adicionar "'+name+'" de volta depois, elas voltam a contar no saldo.')) return;
+    var people = state.config.people.slice();
+    people.splice(idx,1);
+    state.config = Object.assign({}, state.config, { people: people });
+    saveConfig();
+  });
+
+  document.getElementById('addPersonBtn').addEventListener('click', function(){
+    var people = state.config.people.slice();
+    var n = people.length + 1;
+    var name = 'Colega '+n;
+    while(people.some(function(p){ return p.name===name; })){ n++; name = 'Colega '+n; }
+    people.push({name:name, car:''});
+    state.config = Object.assign({}, state.config, { people: people });
+    saveConfig();
+  });
+
+  startDateInputEl.addEventListener('change', function(){
+    if(!startDateInputEl.value) return;
+    state.config = Object.assign({}, state.config, { startDate: startDateInputEl.value });
+    saveConfig();
+  });
+
+  holidayListEl.addEventListener('change', function(e){
+    var toggle = e.target.closest('[data-holiday-toggle]');
+    if(!toggle) return;
+    var ds = toggle.getAttribute('data-holiday-toggle');
+    var removed = new Set(state.config.removedHolidays||[]);
+    if(toggle.checked){ removed.delete(ds); } else { removed.add(ds); }
+    state.config = Object.assign({}, state.config, { removedHolidays: Array.from(removed) });
+    saveConfig();
+  });
+  holidayListEl.addEventListener('click', function(e){
+    var rm = e.target.closest('[data-remove-custom]');
+    if(!rm) return;
+    var ds = rm.getAttribute('data-remove-custom');
+    var added = (state.config.addedHolidays||[]).filter(function(h){ return h.date!==ds; });
+    state.config = Object.assign({}, state.config, { addedHolidays: added });
+    saveConfig();
+  });
+
+  document.getElementById('addHolidayBtn').addEventListener('click', function(){
+    var dateEl = document.getElementById('customHolidayDate');
+    var nameEl = document.getElementById('customHolidayName');
+    var ds = dateEl.value, name = nameEl.value.trim();
+    if(!ds || !name) return;
+    var added = (state.config.addedHolidays||[]).filter(function(h){ return h.date!==ds; });
+    added.push({date:ds, name:name});
+    state.config = Object.assign({}, state.config, { addedHolidays: added });
+    dateEl.value=''; nameEl.value='';
+    saveConfig();
+  });
+
+  document.addEventListener('visibilitychange', function(){
+    if(document.visibilityState === 'visible') loadFromServer();
+  });
+
+  /* ---------------- boot ---------------- */
+  render();
+  loadFromServer();
+  setInterval(loadFromServer, POLL_MS);
+  setInterval(function(){ renderSaldo(); renderCalendar(); renderKpi(); }, 60000);
+})();
+</script>
+<script>
+// Registro do service worker do PWA — só roda quando servido por http/https (nunca em file://,
+// que é como o app também pode continuar sendo usado, sem instalar nada).
+if('serviceWorker' in navigator && (location.protocol==='https:' || location.hostname==='localhost')){
+  window.addEventListener('load', function(){
+    navigator.serviceWorker.register('service-worker.js').catch(function(){});
+  });
+}
+</script>
+</body>
+</html>
