@@ -1,6 +1,6 @@
 {
-  "name": "Rodízio de Caronas",
-  "short_name": "Rodízio",
+  "name": "CaronaPF",
+  "short_name": "CaronaPF",
   "description": "Controle de rodízio de caronas de trabalho — calendário, metas por carro e indicadores.",
   "start_url": "./index.html",
   "scope": "./",
