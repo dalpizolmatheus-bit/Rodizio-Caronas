@@ -225,6 +225,10 @@
   .cell-unmarked-past::after{
     content:""; position:absolute; top:6px; right:6px; width:6px; height:6px; border-radius:50%; background:var(--bad);
   }
+  .cell-locked{ opacity:.6; cursor:default; }
+  .cell-locked::before{
+    content:"🔒"; position:absolute; top:5px; right:6px; font-size:9px; line-height:1; opacity:.75;
+  }
   .day-num{ font-size:12.5px; font-weight:700; font-variant-numeric:tabular-nums; }
   .day-tag{ font-size:9.5px; color:var(--ink-soft); line-height:1.2; }
   .driver-badge{
@@ -427,7 +431,9 @@
       <h2 id="monthLabel"></h2>
       <button type="button" class="nav-btn" id="nextMonth" aria-label="Próximo mês">›</button>
       <button type="button" class="today-btn" id="todayBtn">Hoje</button>
+      <button type="button" class="today-btn" id="toggleMonthLockBtn" style="margin-left:0;"></button>
     </div>
+    <p class="settings-note" id="monthLockNote" style="margin:-2px 0 10px;"></p>
     <div class="legend" id="legendRow"></div>
     <div class="weekday-row">
       <span>Dom</span><span>Seg</span><span>Ter</span><span>Qua</span><span>Qui</span><span>Sex</span><span>Sáb</span>
@@ -497,6 +503,11 @@
         </div>
         <p class="settings-note">Os feriados nacionais são calculados automaticamente para qualquer ano (inclusive os móveis, como Carnaval e Corpus Christi). Desmarque os que a empresa não folga, ou adicione feriados próprios.</p>
       </div>
+      <div class="settings-group">
+        <h4>Fechamento mensal</h4>
+        <p class="settings-note" style="margin-bottom:8px;">Um mês fechado trava as marcações de carona dele — ninguém consegue mais mudar quem dirigiu em nenhum dia daquele mês (mesmo não mexendo pelas Configurações). Use o botão de cadeado no topo do calendário pra fechar ou reabrir o mês em exibição. Configurações, nomes e feriados continuam editáveis normalmente.</p>
+        <div id="closedMonthsList"></div>
+      </div>
     </div>
   </details>
 </div>
@@ -519,7 +530,7 @@
   // (veja o guia de configuração). Exemplo:
   // var API_URL = "https://script.google.com/macros/s/AKfycbzrDMYiQaDG87DbPdIZjBkmhB4vmN8e54pSOohZCn5FXc6MpQ_dfiZNCM2Io5NRrB-N9w/exec";
   // ============================================================================
-  var API_URL = "https://script.google.com/macros/s/AKfycbxB9GgXjJaH-sxeBAvsf1T9GmcuDq8O4BpSKPxJASd2rOdS7iFv9s2wqtkOQ-OVihDX2A/exec";
+  var API_URL = "https://script.google.com/macros/s/AKfycbzV_IqFk9Amt7jsVP05FNHVne1zcEu7LHMncjU3Gc4ymOaRDwLcxkzvrqJi-ZSP6vsLyQ/exec";
   var POLL_MS = 20000;
   var PALETTE_SIZE = 8; // quantidade de cores --p1..--p8 definidas no CSS; cores se repetem se houver mais colegas que isso
 
@@ -590,7 +601,7 @@
     var d0 = todaySP();
     return {
       people:[{name:'Gringo',car:'',startDate:d0},{name:'Rubian',car:'',startDate:d0},{name:'Grilo',car:'',startDate:d0}],
-      startDate: d0, addedHolidays:[], removedHolidays:[]
+      startDate: d0, addedHolidays:[], removedHolidays:[], closedMonths:[]
     };
   }
 
@@ -744,6 +755,9 @@
   var appRootEl = document.getElementById('appRoot');
   var syncOverlayEl = document.getElementById('syncOverlay');
   var syncOverlayTextEl = document.getElementById('syncOverlayText');
+  var toggleMonthLockBtnEl = document.getElementById('toggleMonthLockBtn');
+  var monthLockNoteEl = document.getElementById('monthLockNote');
+  var closedMonthsListEl = document.getElementById('closedMonthsList');
 
   function render(){
     derivedCarGroups = computeCarGroups();
@@ -885,6 +899,7 @@
     var startDow = first.getDay();
     var total = daysInMonth(y,m);
     var todayStr = todaySP();
+    var monthLocked = isMonthClosed(y,m);
 
     var html = '';
     for(var i=0;i<startDow;i++){ html += '<div class="cell cell-empty" aria-hidden="true"></div>'; }
@@ -904,15 +919,27 @@
       if(isToday) classes.push('cell-today');
       if(businessDay) classes.push('cell-business');
       if(businessDay && !driver && isPast && ds >= state.config.startDate) classes.push('cell-unmarked-past');
+      if(monthLocked) classes.push('cell-locked');
       var idx = driver ? personIndex(driver) : -1;
       var slot = idx>=0 ? personColorSlot(carGroupIndexOf(driver)) : 0; // cor do CARRO da pessoa, não da pessoa em si
       var badge = (driver && idx>=0) ? '<span class="driver-badge" style="--pc:var(--p'+slot+');--pcbg:var(--p'+slot+'-bg)">'+escapeHtml(driver)+'</span>' : '';
       var tag = isHoliday ? '<span class="day-tag">'+escapeHtml(holidayName)+'</span>' : (isWeekend ? '<span class="day-tag">fim de semana</span>' : '');
-      html += '<button type="button" class="'+classes.join(' ')+'" data-date="'+ds+'" '+(businessDay?'':'disabled')+
-        ' aria-label="'+ds+(holidayName?', feriado: '+escapeHtml(holidayName):'')+'">'+
+      var isDisabled = !businessDay || monthLocked;
+      var ariaLabel = ds+(holidayName?', feriado: '+escapeHtml(holidayName):'')+(monthLocked?', mês fechado':'');
+      html += '<button type="button" class="'+classes.join(' ')+'" data-date="'+ds+'" '+(isDisabled?'disabled':'')+
+        ' aria-label="'+ariaLabel+'">'+
         '<span class="day-num">'+day+'</span>'+badge+tag+'</button>';
     }
     dayGridEl.innerHTML = html;
+    renderMonthLockUI(y, m, monthLocked);
+  }
+
+  function renderMonthLockUI(y, m, monthLocked){
+    toggleMonthLockBtnEl.textContent = monthLocked ? '🔓 Reabrir mês' : '🔒 Fechar mês';
+    toggleMonthLockBtnEl.setAttribute('aria-pressed', monthLocked ? 'true' : 'false');
+    monthLockNoteEl.textContent = monthLocked
+      ? 'Este mês está fechado — as marcações de carona dele não podem mais ser alteradas.'
+      : '';
   }
 
   function renderModal(){
@@ -976,6 +1003,26 @@
     holidayListEl.innerHTML =
       '<p class="settings-caption">Feriados nacionais em '+year+' (desmarque os que não valem na empresa):</p>'+rows+
       (addedForYear.length ? '<p class="settings-caption" style="margin-top:10px;">Feriados adicionados:</p>'+addedRows : '');
+
+    renderClosedMonthsList();
+  }
+
+  function monthLabelFromKey(key){
+    var parts = key.split('-');
+    var y = parseInt(parts[0],10), m = parseInt(parts[1],10)-1;
+    return capFirst(MONTH_NAMES[m]+' de '+y);
+  }
+
+  function renderClosedMonthsList(){
+    var closed = (state.config.closedMonths||[]).slice().sort();
+    if(!closed.length){
+      closedMonthsListEl.innerHTML = '<p class="settings-caption">Nenhum mês fechado no momento.</p>';
+      return;
+    }
+    closedMonthsListEl.innerHTML = closed.map(function(key){
+      return '<div class="holiday-row holiday-row-custom"><span>🔒 '+escapeHtml(monthLabelFromKey(key))+'</span>'+
+        '<button type="button" class="btn-tiny" data-reopen-month="'+key+'">reabrir</button></div>';
+    }).join('');
   }
 
   /* ---------------- indicadores (KPI) ---------------- */
@@ -1133,13 +1180,20 @@
         return null;
       }).filter(function(p){ return p && p.name; });
     }
+    var closedMonths = Array.isArray(raw.closedMonths)
+      ? raw.closedMonths.filter(function(m){ return typeof m==='string' && /^\d{4}-\d{2}$/.test(m); })
+      : [];
     return {
       people: (people && people.length) ? people : d.people,
       startDate: raw.startDate || d.startDate,
       removedHolidays: raw.removedHolidays || [],
-      addedHolidays: raw.addedHolidays || []
+      addedHolidays: raw.addedHolidays || [],
+      closedMonths: closedMonths
     };
   }
+
+  function monthKey(y,m){ return y+'-'+pad(m+1); }
+  function isMonthClosed(y,m){ return (state.config.closedMonths||[]).indexOf(monthKey(y,m)) !== -1; }
 
   function noCacheUrl(){
     // "cache busting": alguns proxies/CDNs na frente do Apps Script guardam a resposta do GET por
@@ -1194,13 +1248,32 @@
     });
   }
 
+  function rideErrorMessage(err){
+    if(err === 'mes_fechado') return 'Esse mês está fechado — não é possível alterar marcações de carona nele. Reabra o mês em Configurações se precisar corrigir algo.';
+    return 'Não foi possível salvar essa marcação' + (err ? ' ('+err+')' : '') + '. Tente de novo.';
+  }
+
   function markDay(ds, person){
+    var previous = state.rides[ds];
     state.rides = Object.assign({}, state.rides);
     if(person){ state.rides[ds] = person; } else { delete state.rides[ds]; }
     pendingRides[ds] = { person: person || '', ts: Date.now() };
     render();
     postToServer({type:'ride', date: ds, driver: person || ''})
-      .then(function(){ syncStatus='ok'; renderSyncBadge(); })
+      .then(function(res){
+        if(res && res.ok === false){
+          // o servidor recusou (ex.: mês fechado) — desfaz a marcação otimista que já tinha ido
+          // pra tela, senão o app fica mostrando algo que não foi salvo de verdade.
+          delete pendingRides[ds];
+          state.rides = Object.assign({}, state.rides);
+          if(previous){ state.rides[ds] = previous; } else { delete state.rides[ds]; }
+          syncStatus = 'ok';
+          render();
+          alert(rideErrorMessage(res.error));
+          return;
+        }
+        syncStatus='ok'; renderSyncBadge();
+      })
       .catch(function(){ syncStatus='error'; renderSyncBadge(); });
   }
 
@@ -1368,10 +1441,58 @@
     if(document.visibilityState === 'visible') loadFromServer();
   });
 
+  function lockErrorMessage(err){
+    if(err === 'senha_invalida') return 'Senha incorreta — nada foi alterado.';
+    return 'Não foi possível alterar o fechamento do mês' + (err ? ' ('+err+')' : '') + '. Tente de novo.';
+  }
+
+  // Fechar/reabrir um mês exige a senha de administrador, conferida no SERVIDOR (não só aqui) —
+  // por isso isso não usa saveConfig()/postToServer({type:'config',...}) como o resto das
+  // configurações: é um pedido à parte (type:'toggleMonthLock'), senão bastaria mandar um POST de
+  // config comum pra mudar closedMonths sem senha nenhuma.
+  function toggleMonthLock(key, close, label){
+    var action = close ? 'fechar' : 'reabrir';
+    var promptMsg = (close
+      ? 'Fechar '+label+'?\n\nNinguém mais vai conseguir marcar, trocar ou limpar quem dirigiu em nenhum dia desse mês, até reabrir. Configurações, nomes e feriados continuam editáveis normalmente.\n\n'
+      : 'Reabrir '+label+'?\n\nVolta a permitir alterar as marcações de carona desse mês.\n\n'
+    ) + 'Digite a senha de administrador pra confirmar:';
+    var pwd = prompt(promptMsg, '');
+    if(pwd === null) return; // cancelou
+    if(!pwd.trim()){ alert('Digite a senha pra '+action+' o mês.'); return; }
+    postToServer({type:'toggleMonthLock', monthKey:key, close:!!close, password:pwd})
+      .then(function(res){
+        if(res && res.ok === false){ alert(lockErrorMessage(res.error)); return; }
+        state.config = Object.assign({}, state.config, { closedMonths: (res && res.closedMonths) || [] });
+        syncStatus='ok';
+        render();
+      })
+      .catch(function(){ syncStatus='error'; renderSyncBadge(); alert('Falha de conexão — tente de novo.'); });
+  }
+
+  toggleMonthLockBtnEl.addEventListener('click', function(){
+    var y = state.viewYear, m = state.viewMonth;
+    var key = monthKey(y,m);
+    var locked = isMonthClosed(y,m);
+    var label = capFirst(MONTH_NAMES[m]+' de '+y);
+    toggleMonthLock(key, !locked, label);
+  });
+
+  closedMonthsListEl.addEventListener('click', function(e){
+    var btn = e.target.closest('[data-reopen-month]');
+    if(!btn) return;
+    var key = btn.getAttribute('data-reopen-month');
+    toggleMonthLock(key, false, monthLabelFromKey(key));
+  });
+
   /* ---------------- boot ---------------- */
   render();
   loadFromServer();
-  setInterval(loadFromServer, POLL_MS);
+  // só faz a chamada de sincronização periódica se a aba estiver realmente visível — uma aba
+  // esquecida aberta em segundo plano o dia inteiro não fica batendo no Apps Script a cada 20s à
+  // toa (isso soma MUITAS chamadas por dia com várias pessoas e ajuda a estourar a cota diária do
+  // Google, que é uma causa comum de lentidão/erro esporádico). Ao voltar pra aba, o listener de
+  // visibilitychange logo acima já dispara uma sincronização imediata.
+  setInterval(function(){ if(!document.hidden) loadFromServer(); }, POLL_MS);
   setInterval(function(){ renderSaldo(); renderCalendar(); renderKpi(); }, 60000);
 })();
 </script>
